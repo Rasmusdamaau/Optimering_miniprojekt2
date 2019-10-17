@@ -1,5 +1,5 @@
 ---
-title: "BJ"
+title: "Optimisation: Self study 2 -- Calculating derivatives"
 output: html_document
 ---
 
@@ -7,22 +7,62 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Exercise 1
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+We have considered forward-difference (using $f(x)$ and $f(x + h)$) and central-difference (using $f(x - h)$ and $f(x + h)$). 
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+1. What would happen if we extend the central-difference to also use $f(x - 2h)$ and $f(x + 2h)$? Hint: consider the Taylor series up to a sufficiently high power of $h$. Hint: "five-point stencil".
+2. Analyse this method in comparison with FD and CD (theoretically and practically on specific examples).
+3. What are the advantages and disadvantages of the different finite difference methods?
 
-```{r cars}
-summary(cars)
+# Exercise 2
+
+Implement forward-mode algorithmic differentiation (AD) for univariate ($\mathbb{R} \to \mathbb{R}$) functions in `R` (supporting the following operations: `+`, `-`, `*`, `/`, `sin`, `cos`, `exp`). Use on the following problem and compare it with other ways of calculating the derivatives:
+
+\[
+  f(x) = \cos[ \sin(x) \cos(x) ]
+\]
+
+**Optional**:
+
+Extend your implementation to handle multivariate ($\mathbb{R}^n \to \mathbb{R}$) functions and use on the following problem and compare it with other ways of calculating the derivatives:
+
+\[
+  f(x) = [ x_1 x_2 \sin(x_3) + \exp(x_1 x_2) ] / x_3 \tag{8.26}
+\]
+
+# Exercise 3
+
+In a gradient descent problem (e.g. Rosenbrock's function or best straight line for `cars` dataset), compare the use of exact and numerical derivatives and discuss it. The comparisons can include e.g. illustrations or summary measures (number of iterations, amount of time spent, accuracy of solution and possibly other aspects).
+
+Remember that in `R`, there are many ways of registering amount of time spent. For very fast operations, you can use:
+
+```{r}
+library(microbenchmark)
+X <- model.matrix(~ speed, cars)
+microbenchmark(lm(dist ~ speed, cars), 
+               lm.fit(X, cars$dist),
+               lm.fit(model.matrix(~ speed, cars), cars$dist), 
+               times = 100)
 ```
 
-## Including Plots
+For slower operations, you can do it manually:
 
-You can also embed plots, for example:
+```{r}
+time_begin <- proc.time()
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+for (i in 1:1000) {
+  lm(dist ~ speed, cars)
+}
+
+time_end <- proc.time()
+time_duration <- time_end - time_begin
+time_duration_secs <- time_duration["user.self"]
+time_duration_secs
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+# Exercise 4: Be creative!
+
+If you have anything, put it here.
+
