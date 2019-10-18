@@ -93,29 +93,28 @@ Apply it on:
 adfn <- function(x){
   (x[[1]]*x[[2]]*sin(x[[3]])+exp(x[[1]]*x[[2]]))/x[[3]]
 }
-  
+
 
 Gradient <- function(x, funk) {
-  g <- list()
-  funk <- funk
+  g <- list() # tom liste til at fylde inputs ind
   for (i in 1:length(x)) {
-    g[[i]] <- create_ADnum(x[i])
+    g[[i]] <- create_ADnum(x[i]) # laver ADnum klasser af alle x
   }
-  n <- length(g)
-  pp <- c()
+  n <- length(g) # antal variable
+  pp <- c() # tom vektor til gradient
   for (i in 1L:n) {
-    inputs <- vector("list", n)
+    inputs <- vector("list", n) # tom vector til at putte vaerdier og ADnum ind
     for (j in 1L:n) {
       if (j == i) {
-        inputs[[j]] <- g[[j]]
+        inputs[[j]] <- g[[j]] # ADnum
       } else {
-        inputs[[j]] <- g[[j]]$val
+        inputs[[j]] <- g[[j]]$val # fastholdt vaerdi
       }
       
     }
-    pp[i] <- funk(inputs)$deriv
+    pp[i] <- funk(inputs)$deriv # i'te indgang i gradient
   }
-  pp
+  pp # gradient
 }
 Gradient(c(1,2,3), adfn)
 
