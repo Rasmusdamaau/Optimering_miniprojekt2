@@ -7,22 +7,132 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r algoritmisk diff udvidet til vektorer}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
+create_ADnum <- function(val, deriv = 1) {
+  x <- list(val = val, deriv = deriv)
+  class(x) <- "ADnum"
+  return(x)
+}
+
+x <- create_ADnum(4)
+
+print.ADnum <- function(x, ...) {
+  cat("value = ", x$val,
+      " and deriv = ", x$deriv, "\n", sep = "")
+  return(invisible(x))
+}
+
+Ops.ADnum <- function(e1, e2) {
+  # LHS constant, e.g. 2*x: e1 is a number 2, convert to ADnum
+  if (.Method[1] == "") {
+    e1 <- create_ADnum(e1, 0)
+  }
+  # RHS constant, e.g. x*2: e2 is a number 2, convert to ADnum
+  if (.Method[2] == "") {
+    e2 <- create_ADnum(e2, 0)
+  }
+  if (.Generic == "*") {
+    return(create_ADnum(e1$val * e2$val, e1$deriv*e2$val + e2$deriv*e1$val))
+  }
+  if (.Generic == "/") {
+    return(create_ADnum(e1$val / e2$val, (e1$deriv*e2$val - e2$deriv*e1$val)/(e2$val)^2))
+  }
+  if (.Generic == "+") {
+    return(create_ADnum(e1$val + e2$val, e1$deriv + e2$deriv))
+  }
+  if (.Generic == "-") {
+    return(create_ADnum(e1$val - e2$val, e1$deriv - e2$deriv))
+  }
+  stop("Function '", .Generic, "' not yet implemented for ADnum")
+}
+
+Math.ADnum <- function(x, ...) {
+  if (.Generic == "cos") {
+    # Before: create_ADnum(cos(x$val), -sin(x$val))
+    return(create_ADnum(cos(x$val), -sin(x$val) * x$deriv))
+  }
+  if (.Generic == "sin") {
+    # Before: create_ADnum(sin(x$val), cos(x$val))
+    return(create_ADnum(sin(x$val), cos(x$val) * x$deriv))
+  }
+  if (.Generic == "exp") {
+    return(create_ADnum(exp(x$val), exp(x$val) * x$deriv))
+  }
+  if (.Generic == "log") {
+    return(create_ADnum(log(x$val), 1/x$val * x$deriv))
+  }
+  stop("Function '", .Generic, "' not yet implemented for ADnum")
+}
+
+
+
+
+x1 <- create_ADnum(1)
+x2 <- create_ADnum(2)
+x3 <- create_ADnum(3)
+x <- list(x1,x2, x3)
+
+ADf <- function(x) {
+  sin(x[[1]]) * cos(x[[2]]) * sin(x[[3]])
+}
+tjek_ADf <- function(y) {
+  eval(envir = (expression(D(sin(y[1]) * cos(y[2]) * sin(y[3])))), y)
+}
+tjek_ADf(c(1,2,3))
+
+
+g_exact <- function(x) {
+  c(cos(x[[1]]) * cos(x[[2]]), -sin(x[[1]]) * sin(x[[2]]))
+}
+
+g_exact(c(1,2))
+
+g <- function(x) {
+  x_1 <- x[[1]]
+  x_2 <- x[[2]]
+  x_3 <- x[[3]]
+  g1 <- ADf(list(x_1, x_2$val, x_3$val))$deriv
+  g2 <- ADf(list(x_1$val, x_2, x_3$val))$deriv
+  g3 <- ADf(list(x_1$val, x_2$val, x_3))$deriv
+  c(g1,g2,g3)
+}
+g(x)
+
+
+
+n <- length(x)
+i <- 1L
+inputs <- vector("list", n)
+for (j in 1L:n) {
+  if (j == i) {
+    inputs[[j]] <- create_ADnum(x[[j]]$val)
+  } else {
+    inputs[[j]] <- x[[j]]$val
+  }
+}
+inputs
+
+f(inputs)
+
+f <- function(x) {
+  (x[[1]] * x[[2]] * sin(x[[3]] + exp(x[[1]] * x[[2]])))/x[[3]]
+}
+
+f <- function(x) {
+  x1 <- x[1]
+  x2 <- x[2]
+  x3 <- x[3]
+  (x1 * x2 * sin(x3) +exp(x1 * x2))/x3
+}
+
+library(numDeriv)
+x <- c(1,2,3)
+grad(f,x)
+hessian(f,x)
+
+
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
