@@ -134,20 +134,8 @@ x <- list(val = val, deriv = deriv)
 class(x) <- "ADnum"
 return(x)
 }
-
-
-create_ADnum_vec <- function(val, deriv = 1){
-  emtlist <- list()
-  for (i in seq_along(val)) {
-    emtlist[[i]] <- create_ADnum(val[i])
-  }
-  return(emtlist)
-}
-
-create_ADnum_vec(c(2,4,3))
-
-
-
+x <- create_ADnum(3)
+x
 ```
 
 ```{r}
@@ -156,12 +144,57 @@ cat("value = ", x$val,
 " and deriv = ", x$deriv, "\n", sep = "")
 return(invisible(x))
 }
-x_1
-y
-y[[2]]
 #funktionen kan stadigt ikke gange, eller tage geometriske funktioner af noget.
-2*x
-cos(x)
+```
+Ydermere defineres **ting**
+```{r}
+Ops.ADnum <- function(e1, e2) {
+  # LHS constant, e.g. 2*x: e1 is a number 2, convert to ADnum
+  if (.Method[1] == "") {
+    e1 <- create_ADnum(e1, 0)
+  }
+  # RHS constant, e.g. x*2: e2 is a number 2, convert to ADnum
+  if (.Method[2] == "") {
+    e2 <- create_ADnum(e2, 0)
+  }
+  if (.Generic == "*") {
+    return(create_ADnum(e1$val * e2$val, e1$deriv*e2$val + e2$deriv*e1$val))
+  }
+  if (.Generic == "/") {
+    return(create_ADnum(e1$val / e2$val, (e1$deriv*e2$val - e2$deriv*e1$val)/(e2$val)^2))
+  }
+  if (.Generic == "+") {
+    return(create_ADnum(e1$val + e2$val, e1$deriv + e2$deriv))
+  }
+  if (.Generic == "-") {
+    return(create_ADnum(e1$val - e2$val, e1$deriv - e2$deriv))
+  }
+  stop("Function '", .Generic, "' not yet implemented for ADnum")
+}
+
+Math.ADnum <- function(x, ...) {
+  if (.Generic == "cos") {
+    # Before: create_ADnum(cos(x$val), -sin(x$val))
+    return(create_ADnum(cos(x$val), -sin(x$val) * x$deriv))
+  }
+  if (.Generic == "sin") {
+    # Before: create_ADnum(sin(x$val), cos(x$val))
+    return(create_ADnum(sin(x$val), cos(x$val) * x$deriv))
+  }
+  if (.Generic == "exp") {
+    return(create_ADnum(exp(x$val), exp(x$val) * x$deriv))
+  }
+  if (.Generic == "log") {
+    return(create_ADnum(log(x$val), 1/x$val * x$deriv))
+  }
+  stop("Function '", .Generic, "' not yet implemented for ADnum")
+}
+
+```
+
+```{r}
+asdf <- function(x) cos(sin(x)*cos(x))
+asdf(x)
 ```
 
 
@@ -172,6 +205,57 @@ Extend your implementation to handle multivariate ($\mathbb{R}^n \to \mathbb{R}$
 \[
   f(x) = [ x_1 x_2 \sin(x_3) + \exp(x_1 x_2) ] / x_3 \tag{8.26}
 \]
+
+```{r}
+create_ADnum_vec <- function(val, deriv = 1){
+  emtlist <- list()
+  for (i in seq_along(val)) {
+    emtlist[[i]] <- create_ADnum(val[i])
+  }
+  return(emtlist)
+}
+y <- create_ADnum_vec(c(5,3,3))
+create_ADnum_vec(c(2,4,3))
+```
+
+```{r}
+test_var <- create_ADnum_vec(c(1,2,3))
+ADf <- function(x) {
+ (x[[1]]*x[[2]]*sin(x[[3]])+exp(x[[1]]*x[[2]]))/x[[3]]
+}
+ADf(test_var)
+
+g <- function(x) {
+  x_1 <- x[[1]]
+  x_2 <- x[[2]]
+  x_3 <- x[[3]]
+  g1 <- ADf(list(x_1, x_2$val, x_3$val))$deriv
+  g2 <- ADf(list(x_1$val, x_2, x_3$val))$deriv
+  g3 <- ADf(list(x_1$val, x_2$val, x_3))$deriv
+  c(g1,g2,g3)
+}
+g(test_var)
+
+Gradient <- function(g, funk) {
+  n <- length(g) # antal variable
+  pp <- c() # tom vektor til gradient
+  for (i in 1L:n) {
+    inputs <- vector("list", n) # tom vector til at putte vaerdier og ADnum ind
+    for (j in 1L:n) {
+      if (j == i) {
+        inputs[[j]] <- g[[j]] # ADnum
+      } else {
+        inputs[[j]] <- g[[j]]$val # fastholdt vaerdi
+      }
+    }
+    pp[i] <- funk(inputs)$deriv # i'te indgang i gradient
+  }
+  pp # gradient
+}
+Gradient(test_var, ADf)
+```
+
+
 
 # Exercise 3
 
