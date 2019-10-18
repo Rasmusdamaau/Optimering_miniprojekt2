@@ -106,7 +106,7 @@ c_dif2_f <- function(x, tol = eps_cd2){
 }
 c_dif2_f(pi/3)
 ```
-Dermed giver de alle samme svar, hvilket er acceptabelt, når funktionen, samt punktet er relativt pæn. Det er klart at hvis funktionen havde været sværre at differentiere vil c_dif2_f være den mest præcise af de tre overstående algoritmer, grundet deres total error. Dog tager c_dif2_f $4n$ itterationer, sammenlignet med CD som tager $2n$ og FD's $n+1$, hvorfor c_dif2_f implementeringen burde være relativt langsommere end CD, som er langsommere end FD, dette kan dobbelttjekkes ved microbenchmark
+Dermed giver de alle samme svar, hvilket er acceptabelt, når funktionen, samt punktet er relativt pæn. Det er klart at hvis funktionen havde været sværre at differentiere vil c_dif2_f være den mest præcise af de tre overstående algoritmer, grundet deres total error. Dog tager c_dif2_f $4n$ itterationer, sammenlignet med CD som tager $2n$ og FD's $n+1$, hvorfor c_dif2_f implementeringen burde være relativt langsommere end CD og FD, ved højere dinemtioner ($n$) vil CD også blive langsommere end FD.
 
 ```{r}
 library(microbenchmark)
@@ -125,6 +125,45 @@ Implement forward-mode algorithmic differentiation (AD) for univariate ($\mathbb
 \[
   f(x) = \cos[ \sin(x) \cos(x) ]
 \]
+
+Først implementeres en funktion, som 
+
+```{r}
+create_ADnum <- function(val, deriv = 1) {
+x <- list(val = val, deriv = deriv)
+class(x) <- "ADnum"
+return(x)
+}
+
+
+create_ADnum_vec <- function(val, deriv = 1){
+  emtlist <- list()
+  for (i in seq_along(val)) {
+    emtlist[[i]] <- create_ADnum(val[i])
+  }
+  return(emtlist)
+}
+
+create_ADnum_vec(c(2,4,3))
+
+
+
+```
+
+```{r}
+print.ADnum <- function(x, ...) {
+cat("value = ", x$val,
+" and deriv = ", x$deriv, "\n", sep = "")
+return(invisible(x))
+}
+x_1
+y
+y[[2]]
+#funktionen kan stadigt ikke gange, eller tage geometriske funktioner af noget.
+2*x
+cos(x)
+```
+
 
 **Optional**:
 
