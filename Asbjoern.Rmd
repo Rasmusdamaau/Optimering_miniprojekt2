@@ -1,5 +1,5 @@
 ---
-title: "Asbjoern"
+title: "Optimisation 2.2: Exercises"
 output: html_document
 ---
 
@@ -7,22 +7,147 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Algorithmic differentiation
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Work out all the details (with pen and paper) of calculating $\dot{v}_1$ and $\dot{v}_2$ in the forward mode of the example in slides.
 
-```{r cars}
-summary(cars)
+Work out all the details (with pen and paper) of calculating $\bar{v}_1$ in the reverse mode of the example in slides.
+
+Complete the algorithmic differentiation implementation for univariate ($\mathbb{R} \to \mathbb{R}$) functions in `R`'s S3 class system (for the often used functions such as `/`, `exp` etc.).
+
+```{r}
+create_ADnum <- function(val, deriv = 1) {
+  x <- list(val = val, deriv = deriv)
+  class(x) <- "ADnum"
+  return(x)
+}
+
+
+print.ADnum <- function(x, ...) {
+  cat("value = ", x$val,
+      " and deriv = ", x$deriv, "\n", sep = "")
+  return(invisible(x))
+}
+
+
+Ops.ADnum <- function(e1, e2) {
+# LHS constant, e.g. 2*x: e1 is a number 2, convert to ADnum
+  if (.Method[1] == "") {
+    e1 <- create_ADnum(e1, 0)
+  }
+# RHS constant, e.g. x*2: e2 is a number 2, convert to ADnum
+  if (.Method[2] == "") {
+    e2 <- create_ADnum(e2, 0)
+  }
+  if (.Generic == "*") {
+    return(create_ADnum(e1$val * e2$val, e1$deriv*e2$val + e2$deriv*e1$val))
+  }
+  if (.Generic == "/"){
+    return(create_ADnum(e1$val / e2$val, (e2$val * e1$deriv - e1$val * e2$deriv) / ((e2$val)^2) ))
+  }
+  if (.Generic == "+"){
+    return(create_ADnum(e1$val + e2$val, e1$deriv + e2$deriv))
+  }
+  if (.Generic == "-"){
+    return(create_ADnum(e1$val - e2$val, e1$deriv - e2$deriv))
+  }
+stop("Function ’", .Generic, "’ not yet implemented for ADnum")
+}
+
+Math.ADnum <- function(x, ...) {
+  if (.Generic == "cos") {
+    # Before: create_ADnum(cos(x£val), -sin(x£val))
+    return(create_ADnum(cos(x$val), -sin(x$val) * x$deriv))
+  } else if (.Generic == "sin") {
+    # Before: create_ADnum(sin(x£val), cos(x£val))
+    return(create_ADnum(sin(x$val), cos(x$val) * x$deriv))
+  }
+    if (.Generic == "exp"){
+      return(create_ADnum(exp(x$val), exp(x$val) * x$deriv))
+    }
+    
+    stop("Function ’", .Generic, "’ not yet implemented for ADnum")
+}
+ADf <- function(x) { sin(x)*cos(x) }
+ADf(create_ADnum(2))
+ADf2 <- function(x) { sin(x)/cos(x) }
+ADf2(create_ADnum(2))
+ADf3 <- function(x) { cos(sin(x)*cos(x)) / sin(sin(x)*cos(x)) }
+ADf3(create_ADnum(2))
+ADf4 <- function(x) { exp(cos(x)) }
+ADf4(create_ADnum(2))
+ADf5 <- function(x) { exp(4*cos(x)/sin(x)) }
+ADf5(create_ADnum(2))
 ```
 
-## Including Plots
+Apply it on:
 
-You can also embed plots, for example:
+* `ADf <- function(x) { sin(x)*cos(x) }`
+* `ADf <- function(x) { sin(x)/cos(x) }`
+* `ADf <- function(x) { cos(sin(x)*cos(x)) / sin(sin(x)*cos(x)) }` 
+* `ADf <- function(x) { exp(cos(x)) }`
+* `ADf <- function(x) { exp(4*cos(x)/sin(x)) }`
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+adfn <- function(x){
+  (x[[1]]*x[[2]]*sin(x[[3]])+exp(x[[1]]*x[[2]]))/x[[3]]
+}
+  
+
+Gradient <- function(x, funk) {
+  g <- list()
+  funk <- funk
+  for (i in 1:length(x)) {
+    g[[i]] <- create_ADnum(x[i])
+  }
+  n <- length(g)
+  pp <- c()
+  for (i in 1L:n) {
+    inputs <- vector("list", n)
+    for (j in 1L:n) {
+      if (j == i) {
+        inputs[[j]] <- g[[j]]
+      } else {
+        inputs[[j]] <- g[[j]]$val
+      }
+      
+    }
+    pp[i] <- funk(inputs)$deriv
+  }
+  pp
+}
+Gradient(c(1,2,3), adfn)
+
+
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Compare the results with those of finite differencing and symbolic algebra.
+
+```{r}
+
+```
+
+Experiment with the `madness` package (e.g. check your above results).
+
+```{r}
+install.packages("madness")
+  madness
+```
+
+Extend your implementation to handle multivariate functions (vector arguments) with loops.
+
+```{r}
+g <- function(x) {
+	n <- length(x)
+	g_result <- numeric(n)
+	# for...
+	g_result
+}
+g(x)
+g_exact(x_value)
+```
+
+Try your implementation on the function defined in (8.26) in [NW]. Compare the results with those from the `madness` package, finite differencing, and symbolic algebra.
+
