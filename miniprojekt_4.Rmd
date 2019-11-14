@@ -154,7 +154,7 @@ hvor lm anvendes på denne funktion, vi anvender exp på den parameteren til det
 
 ```{r}
 
-
+så
 
 
 ```
