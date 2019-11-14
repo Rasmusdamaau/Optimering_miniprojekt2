@@ -1,0 +1,166 @@
+---
+title: "Optimisation: Self study 4 -- Least squares"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(minpack.lm)
+```
+
+# Exercise 1: OLS
+
+Explain and show different ways to solve an OLS problem (e.g. `cars` dataset) using matrix factorisations.
+
+```{r}
+data(cars)
+mod <- lm(dist ~ speed, data = cars)
+n <- length(cars$speed)
+design <- matrix(rep(1,n), ncol = 2, nrow = n)
+design[,2] <- cars$speed
+# design[,3] <- (cars$speed)^2
+
+svd_design <- svd(design)
+qr_design <- qr(design)
+chol_design <- chol(t(design) %*% design)
+
+# Chol
+b <- t(design) %*% cars$dist
+A <- t(chol_design) %*% chol_design
+
+z <- forwardsolve(t(chol_design), b)
+x <- backsolve(chol_design, z)
+
+# QR
+R <- qr.R(qr_design)
+Q_T <- t(qr.Q(qr_design))
+Q_Ty <- Q_T %*% cars$dist
+
+solve(R, Q_Ty)
+
+# SVD
+
+U <- svd_design$u
+S <- diag(svd_design$d)
+V_T <- svd_design$v
+
+J <- U %*% S %*% t(V_T)
+x_svd <- V_T %*% solve(S) %*% t(U) %*% cars$dist 
+
+
+
+
+```
+
+
+# Exercise 2: NLS
+
+In this exercise the `USPop` data from the `car` package is used (`data(USPop, package = "car")`).
+
+Analyse this data as an NLS problem. Include discussion of starting values (see "Nonlinear Regression and Nonlinear Least Squares in R" by John Fox & Sanford Weisberg, available at Moodle).
+
+Discuss (and maybe demonstrate) which of Gauss-Newton (`nls()`) and Levenberg-Marquardt (`minpack.lm` library) that are more fragile to starting values.
+
+Can you solve this optimisation problem in other ways than by Gauss-Newton/Levenberg-Marquardt?
+
+```{r}
+library(car)
+data <- carData::USPop
+plot(data)
+set.seed(1)
+n <- length(data$population)
+x <- 0:21
+# x <- data$year
+
+
+f <- function(b) {
+  b[1] * exp(b[2] * x)
+}
+y <- data$population
+
+
+dr1 <- function(b) {
+  exp(b[2] * x)
+}
+dr2 <- function(b) {
+  b[1] * exp(b[2] * x) * x
+}
+
+r <- function(b) {
+  f(b) - y
+}
+
+j <- function(b) {
+  j1 <- dr1(b)
+  j2 <- dr2(b)
+  as.matrix(data.frame(j1 = j1, j2 = j2))
+}
+
+d_f <- function(b, j) {
+  t(j) %*% r(b)
+}
+
+gauss_newton <- function(x0) {
+  xk <- x0
+  jk <- j(xk)
+  k <- 0
+  while (norm(d_f(xk, jk), "2") > 1e-03) {
+    k <- k +1
+    rk <- r(xk)
+    jk <- j(xk)
+    dd_f_xk <- t(jk) %*% jk
+    pk <- solve(dd_f_xk, (-t(jk) %*% rk))
+    xk <- xk + pk
+  }
+  cat("x* = ", xk, "\n", "antal iterationer = ", k)
+}
+gauss_newton(c(10,0.1))
+
+nls.lm(c(10,0.1), lower = c(-10,-10), upper = c(100,10), r)
+
+
+
+x_stj <- c(15.0702772068714, 0.141844710338322)
+pred <- f(x_stj)
+pred_df <- as.data.frame(cbind(x, pred))
+names(pred_df) <- c("year", "pred")
+plot(data)
+points(x, f(pred_x))
+plot_data <- data.frame(year = x, population = data$population)
+plot_f <- function(z) {
+  x_stj[1] * exp(x_stj[2] * z)
+}
+
+
+ggplot(plot_data, aes(x,population)) +
+  geom_point(color = "red") +
+  geom_point(aes(x, pred), color = "blue") +
+  stat_function(fun = plot_f)
+
+
+```
+
+Ift starting values anvendes metoden beskrevet i "Appendix-nonlinear-regression" afsnit 2. hvor funktionen vi vil beskrive $y$ med, altså $y = \beta_0 \exp^{\beta_1 x}$ omskrives sådan at parametrene danner en lineær funktion
+
+\begin{align*}
+  y &= \beta_0 \exp^{\beta_1 x} \\
+  \frac{y}{\beta_0} &= \exp{\beta_1 x} \\
+  \log{\frac{y}{\beta_0}} &= \beta_1 x \\
+  \log{y} &= log{\beta_0} + \beta_1 x
+\end{align*}
+
+hvor lm anvendes på denne funktion, vi anvender exp på den parameteren til det konstante led.
+
+```{r}
+
+
+
+
+```
+
+
+
+# Exercise 3: Be creative!
+
+If you have anything, put it here.
