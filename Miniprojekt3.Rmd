@@ -77,7 +77,7 @@ zoom <- function(x_k, a_lo, a_hi, c1, c2, func = f, d_f) {
 }
 
 alpha <- function(a_0, x_k, c1, c2, func = f, d_f) {
-  a_max <- 1*a_0 # Maximum step length. Can also be given as argument.
+  a_max <- 2*a_0 # Maximum step length. Can also be given as argument.
   f_k <- func(x_k)
   phi_k <- f_k
   a_1 <- a_0
@@ -122,10 +122,10 @@ alpha <- function(a_0, x_k, c1, c2, func = f, d_f) {
 }
 
 #params
-c1 <- 1e-4
-c2 <- 0.9
-a_lo <- 0.5
-a_hi <- 2
+c1 <- 0.0002
+c2 <- 0.5
+a_lo <- 0.1
+a_hi <- 3
 a_0 <- 1
 n <- 2
 ```
@@ -146,7 +146,7 @@ BFGS <- function(x_0, fun, dfun, zoom, stoej, output = F) {
   itt <- 0
   H_diff <- c()
   H_diff_ND <- c()
-  while (norm(dfun(x_k),"2") > 1e-7) {
+  while (norm(dfun(x_k),"2") > 1e-5) {
     itt <- itt + 1
     if (output == T) {
       # tjek hvor tæt estimeret H og H er
@@ -155,7 +155,9 @@ BFGS <- function(x_0, fun, dfun, zoom, stoej, output = F) {
     }
     p_k <- - H_k %*% dfun(x_k)
     x_k_old <- x_k
-    ifelse(zoom == T, a_k <- alpha(a_0, x_k, c1, c2, f, d_f), a_k <- 1)
+    ifelse(zoom == T, a_k <- zoom(x_k,a_lo,a_hi,c1,c2,f,d_f), a_k <- 1)
+    # ifelse(zoom == T, a_k <- alpha(a_0, x_k, c1, c2, f, d_f), a_k <- 1)
+    print(a_k)
     x_k <- x_k + a_k * p_k
     s_k <- x_k - x_k_old
     y_k <- dfun(x_k) - dfun(x_k_old)
@@ -182,7 +184,7 @@ BFGS <- function(x_0, fun, dfun, zoom, stoej, output = F) {
 
 BFGS(x_0, f, d_f, zoom = F, stoej = F, output = T)
 BFGS(x_0, f, d_f, zoom = F, stoej = T, output = T)
-
+BFGS(x_0, f, d_f, zoom = T, stoej = F, output = T)
 ```
 
 # Nelder-Mead
