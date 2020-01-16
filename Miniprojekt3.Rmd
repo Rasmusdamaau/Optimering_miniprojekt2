@@ -21,6 +21,57 @@ library(numDeriv)
 
 Iterationer givet ved $x_{k+1} = x_k + \alpha_k p_k$ hvor $p_k$ er fundet ved $B_k p_k = - \nabla f_k$, hvis $B_k$ er en approksimation af hessianen, så er det quasi-Newton metoden. Ved quasi-Newton skal kun gradienten anvendes og derfor kan dette være en fordel ift. Newton.
 
+Sekant ligningen som er vigtig for quasi-Newton er at $B_{k+1} s_k = y_k$, hvor $s_k = \alpha_k p_k$ og $y_k = \nabla f_{k+1} - \nabla f_k$. Det man så gør i BFGS er at kigge på den inverse hessian $H_k$ istedet for den almindelige hessian $B_k$. Altså kommer sekant ligningen til at være
+
+\begin{align*}
+  H_{k+1} y_k = s_k.
+\end{align*}
+
+$H_{k+1}$ skal også være symmetrisk. Dette leder så til at finde en løsning til
+
+\begin{equation}
+   \underset{H}{min} ||H - H_k||
+\end{equation}
+\begin{align}
+   &\text{subject to}\\
+   &H = H^T, \quad H y_k = s_k.
+\end{align}
+
+Som har den unikke løsning
+
+\begin{align*}
+  H_{k+1} = (I - \rho_k s_k y_k^T) H_k (I - \rho_k y_k s_k^T) + \rho_k s_k s_k^T, \quad \rho_k := \frac{1}{y_k^T s_k}.
+\end{align*}
+
+Som er det BFGS bygger på. Så er spørgsmålet bare hvad man skal vælge $H_0$ til at være, dette har ikke noget klart svar, jeg har valgt $I$, man kunne også finde den rigtige inverse hessian i $x_0$ eller kører BFGS 1 iteration og så vælge den og starte forfra.
+
+Kan ikke sige noget om konvergensen for BFGS fordi det er der ikke nogen der ved.
+
+BFGS er god til at være self-correcting som vist i koden, hvor der tilføjes støj og den så korrigere hurtigt.
+
+## DFO
+
+Hvis ikke $f$'s afledte er tilgængelige, eller man ikke vil bruge forward differencing eller automatic differentiation, så kan man anvende DFO.
+
+Der er mange forskellige typer DFO, fokus på Nelder-Mead.
+
+### Nelder-Mead
+
+For at optimere en objektfunktion $f: \mathbb{R}^n \rightarrow \mathbb{R}$ med Nelder-Mead konstrueres et simplex, bestående af $n+1$ punkter, noteret $\{x_1, x_2, \ldots x_{n+1}\}$ hvor de er ordret sådan at
+
+$$f(x_1) \leq f(x_2) \leq \cdots \leq f(x_{n+1}).$$
+
+Og yderligere noter centroiden som 
+
+$$\bar{x} = \frac{1}{n} \sum_{i=1}^n x_i.$$
+
+Og linjen mellem "dårligste" punkt og centroiden som
+
+$$\bar{x}(t) = \bar{x} + t(x_{n+1} - \bar{x}).$$
+
+Så går algoritmen ud på at man vil erstatte det dårligste punkt med et der er bedre ved en af følgenede operationer; reflektering, udvidning, sammentrækning, langs linjen mellem centroiden og det værste punkt. Hvis ikke et bedre punkt kan findes via dette så sammentrækkes simplex'en mod det bedste punkt.
+
+![Nelder-Mead eksempel](C:\Users\rasmu\OneDrive\Dokumenter\Optimering_miniprojekt2\Nelder-Mead_eks.JPG)
 
 # Rosenbrock funktion
 
@@ -123,7 +174,7 @@ alpha <- function(a_0, x_k, c1, c2, func = f, d_f) {
 
 #params
 c1 <- 0.0002
-c2 <- 0.5
+c2 <- 0.9
 a_lo <- 0.1
 a_hi <- 3
 a_0 <- 1
@@ -155,9 +206,8 @@ BFGS <- function(x_0, fun, dfun, zoom, stoej, output = F) {
     }
     p_k <- - H_k %*% dfun(x_k)
     x_k_old <- x_k
-    ifelse(zoom == T, a_k <- zoom(x_k,a_lo,a_hi,c1,c2,f,d_f), a_k <- 1)
-    # ifelse(zoom == T, a_k <- alpha(a_0, x_k, c1, c2, f, d_f), a_k <- 1)
-    print(a_k)
+    # ifelse(zoom == T, a_k <- zoom(x_k,a_lo,a_hi,c1,c2,f,d_f), a_k <- 1)
+    ifelse(zoom == T, a_k <- alpha(a_0, x_k, c1, c2, f, d_f), a_k <- 1)
     x_k <- x_k + a_k * p_k
     s_k <- x_k - x_k_old
     y_k <- dfun(x_k) - dfun(x_k_old)
@@ -178,13 +228,14 @@ BFGS <- function(x_0, fun, dfun, zoom, stoej, output = F) {
     plot(seq_along(H_diff_ND[loft]), y = H_diff_ND[loft])
     cat("Frobenius norm forskelle stoerre end 100 =", "\n", H_diff[!loft], "\n")
     cat("x* =", x_k, "\n", "antal iterationer =", itt)
-  } else
-    cat("x* =", x_k, "\n", "antal iterationer =", itt)
+  }
 }
 
 BFGS(x_0, f, d_f, zoom = F, stoej = F, output = T)
 BFGS(x_0, f, d_f, zoom = F, stoej = T, output = T)
-BFGS(x_0, f, d_f, zoom = T, stoej = F, output = T)
+
+
+# BFGS(x_0, f, d_f, zoom = T, stoej = F, output = T)
 ```
 
 # Nelder-Mead
@@ -295,7 +346,8 @@ optimer_newton_zoom <- function(x_0, f, d_f, dd_f, output = F) {
   while (norm(t(d_f(x_k)), type = "2") > 1e-4) {
     itt <- 1 + itt
     p_k <- solve(dd_f(x_k), -d_f(x_k))
-    a_k <- alpha(a_0, x_k, c1,c2, f, d_f)
+    # a_k <- alpha(a_0, x_k, c1,c2, f, d_f)
+    a_k <- 1
     x_k <- x_k + a_k * t(p_k)
     if (itt > 100000) {
       stop("Too many iterations")
@@ -315,10 +367,10 @@ optimer_newton_zoom(x_0, f, d_f, dd_f, output = T)
 ```{r "Benchmarking Rosenbrock function"}
 microbenchmark(optim(x_0, f, method = "BFGS"),
                optim(x_0, f, method = "Nelder-Mead"),
-               BFGS(x_0, f, d_f, F, stoej = F), 
-               Nelder_mead(x_0, f), 
-               optimer_identitet_zoom(x_0, f, d_f), 
-               optimer_newton_zoom(x_0, f, d_f, dd_f) , times = 2)
+               BFGS(x_0, f, d_f, F, stoej = F),
+               Nelder_mead(x_0, f,output = F),
+               optimer_identitet_zoom(x_0, f, d_f),
+               optimer_newton_zoom(x_0, f, d_f, dd_f,output = F) , times = 10)
 ```
 
 # Convex Elliptical funktion
@@ -341,10 +393,10 @@ dd_f <- function(x) 0.5*rbind(c(200, 0), c(0, 2))
 ```{r "Benchmarking Convex Elliptical function"}
 microbenchmark(optim(x_0, f, method = "BFGS"),
                optim(x_0, f, method = "Nelder-Mead"),
-               BFGS(x_0, f, d_f, F, stoej = F), 
-               Nelder_mead(x_0, f), 
-               optimer_identitet_zoom(x_0, f, d_f), 
-               optimer_newton_zoom(x_0, f, d_f, dd_f) , times = 2)
+               BFGS(x_0, f, d_f, F, stoej = F),
+               Nelder_mead(x_0, f),
+               optimer_identitet_zoom(x_0, f, d_f),
+               optimer_newton_zoom(x_0, f, d_f, dd_f,output = F) , times = 10)
 ```
 
 # Nonconvex sines funktion
@@ -372,8 +424,8 @@ dd_f <- function(x) {
 ```{r "Benchmarking"}
 microbenchmark(optim(x_0, f, method = "BFGS"),
                optim(x_0, f, method = "Nelder-Mead"),
-               BFGS(x_0, f, d_f, F, stoej = F), 
-               Nelder_mead(x_0, f), 
-               optimer_newton_zoom(x_0, f, d_f, dd_f) , times = 2)
+               BFGS(x_0, f, d_f, F, stoej = F),
+               Nelder_mead(x_0, f),
+               optimer_newton_zoom(x_0, f, d_f, dd_f, output = F) , times = 10)
 ```
 
