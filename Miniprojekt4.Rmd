@@ -1,6 +1,8 @@
 ---
 title: "Miniprojekt 4 - Rasmus"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -9,6 +11,87 @@ library(tidyverse)
 library(minpack.lm)
 ```
 
+# Oplæg
+
+## OLS
+
+Objekt funktionen er
+
+$$f(x) = \frac{1}{2} ||J x - y||^2$$
+
+hvor $y = r(0)$. Vi har også
+
+$$\nabla f(x) = J^T( J x - y), \quad \quad \nabla^2 f(x) = J^T J.$$
+
+Pga. at hessianen for objekt funktionen er er positiv semi-definit så er objektfunktionen konveks, og derfor gælder det at hvis $\nabla f(x^*) = 0$ så er $x^*$ global minimum for $f$. Altså skal $x^*$ opfylde normal ligningen
+
+$$J^T J x^* = J^T y. $$
+
+### Cholesky
+
+Hvis $J$ har fuld søjle rank så
+
+$$z^T J^T J z = (Jz)^T Jz = ||Jz||^2 > 0 $$
+
+altså er $J^TJ$ positiv definit og derfor kan man finde en Cholesky faktorisering, så normal ligningen kan løses ved triangulære matricer, sådan
+
+$$LU x = J^T y. $$
+
+### QR
+
+$J = QR$ hvor $R$ er øvre triangulær. Så følger det fra normal ligningen at
+
+$$x^* = ((QR)^T (QR))^{-1} (QR)^T y \\
+= R^{-1} Q^T y$$
+
+hvor ligningssystemet så løses.
+
+### SVD
+
+$J = USV^T$ hvor på samme måde som QR giver $x^* = V S^{-1} U^T y$.
+
+## NLS
+
+### Gauss-Newton
+
+Lad objekt funktionen være
+
+\begin{align*}
+f(x) &= \frac{1}{2} \sum_{j=1}^m r_j^2 (x) \\
+&= \frac{1}{2} r(x)^T \cdot r(x).
+\end{align*}
+
+Lad så $J(x)$ være jacobianten af $r(x)$ så
+
+\begin{align*}
+&\nabla f(x) = J(x)^T r(x). \\
+&\nabla^2 f(x) = J(x)^T J(x)  + \sum_{j=1}^m r_j(x) \nabla^2 r_j(x).
+\end{align*}
+
+Nu anvendes at newton linje søgnings retingen $p_k^N$ er fundet ved
+
+$$\nabla^2 f(x_k) p_k^N = - \nabla f(x_k). $$
+
+Så følger Gauss-Newton ved at indsætte ovenståenede udtryk, med $\nabla^2 f_k \approx J_k^T J_k$, ind i linje søgnings retningen, altså
+
+$$J_k^T J_k p_k^{GN} = - J_k r_k.$$
+
+Dette er implementeret i koden med skridtlængde $1$.
+
+#### Startværdi
+
+Startværdi for Gauss-Newton er svær at finde, her et eksempel på hvordan man kan i tilfældet med en logistic growth model
+
+\begin{align*}
+  y &\approx \frac{\theta_1}{1 + \exp (-(\theta_2 + \theta_3 x ))} \\
+  \frac{y}{\theta_1}& \approx \frac{1}{1 + \exp (-(\theta_2 + \theta_3 x))} \\
+  log\left(\frac{y/ \theta_1}{1 - y/\theta_1}\right) & \approx \theta_2 + \theta_3 x.
+\end{align*}
+
+Hvor $\theta_1$ vælges til at være et tal større end det største i $y$. Og så findes en lineær model for dette hvor koefficienterne anvendes som startpunkt.
+
+
+
 # Exercise 1: OLS
 
 Explain and show different ways to solve an OLS problem (e.g. `cars` dataset) using matrix factorisations.
@@ -16,21 +99,24 @@ Explain and show different ways to solve an OLS problem (e.g. `cars` dataset) us
 ```{r}
 data(cars)
 mod <- lm(dist ~ speed, data = cars)
+mod
+
 n <- length(cars$speed)
 design <- matrix(rep(1,n), ncol = 2, nrow = n)
 design[,2] <- cars$speed
-# design[,3] <- (cars$speed)^2
 
 svd_design <- svd(design)
 qr_design <- qr(design)
 chol_design <- chol(t(design) %*% design)
 
 # Chol
+chol_design
 b <- t(design) %*% cars$dist
-A <- t(chol_design) %*% chol_design
+# A <- t(chol_design) %*% chol_design
 
 z <- forwardsolve(t(chol_design), b)
 x <- backsolve(chol_design, z)
+x
 
 # QR
 R <- qr.R(qr_design)
@@ -45,11 +131,9 @@ U <- svd_design$u
 S <- diag(svd_design$d)
 V_T <- svd_design$v
 
-J <- U %*% S %*% t(V_T)
+# J <- U %*% S %*% t(V_T)
 x_svd <- V_T %*% solve(S) %*% t(U) %*% cars$dist 
-
-
-
+x_svd
 
 ```
 
@@ -64,37 +148,42 @@ Discuss (and maybe demonstrate) which of Gauss-Newton (`nls()`) and Levenberg-Ma
 
 Can you solve this optimisation problem in other ways than by Gauss-Newton/Levenberg-Marquardt?
 
-```{r}
+
+
+```{r warning=FALSE}
 library(car)
 data <- carData::USPop
 plot(data)
 set.seed(1)
 n <- length(data$population)
 x <- 0:21
-# x <- data$year
-
-
-f <- function(b) {
-  b[1] * exp(b[2] * x)
-}
 y <- data$population
 
+# Logistic growth model
+f <- function(b) {
+  b[1]/(1+ exp(-(b[2] + b[3] *x)))
+}
 
+# afledte af f
 dr1 <- function(b) {
-  exp(b[2] * x)
+  1/(1 + exp(-b[2] - b[3] * x ))
 }
 dr2 <- function(b) {
-  b[1] * exp(b[2] * x) * x
+  (b[1] * exp(-b[3] *x - b[2])) / (1+ exp(-b[3] *x -b[2]))^2
 }
-
-r <- function(b) {
-  f(b) - y
+dr3 <- function(b) {
+  ( b[1] * x * exp(-b[3] * x -b[2])) / ( 1 + exp(-b[3] * x - b[2] ))^2
 }
 
 j <- function(b) {
   j1 <- dr1(b)
   j2 <- dr2(b)
-  as.matrix(data.frame(j1 = j1, j2 = j2))
+  j3 <- dr3(b)
+  as.matrix(data.frame(j1 = j1, j2 = j2, j3 = j3))
+}
+
+r <- function(b) {
+  f(b) - y
 }
 
 d_f <- function(b, j) {
@@ -115,23 +204,21 @@ gauss_newton <- function(x0) {
   }
   cat("x* = ", xk, "\n", "antal iterationer = ", k)
 }
-gauss_newton(c(10,0.1))
+gauss_newton(c(300,-4,0.29))
 
-nls.lm(c(10,0.1), lower = c(-10,-10), upper = c(100,10), r)
+# R NLS
+nls(formula = y ~ b1/(1+ exp(-(b2 + b3 *x))),start = list(b1 = 300,b2 = -4,b3 = 0.29))
 
+# find startværdi
+lm(logit(y/300) ~ x)
 
-
-x_stj <- c(15.0702772068714, 0.141844710338322)
+# x* fundet
+x_stj <- c(440.8327, -4.0324, 0.2161)
 pred <- f(x_stj)
-pred_df <- as.data.frame(cbind(x, pred))
-names(pred_df) <- c("year", "pred")
-plot(data)
-points(x, f(pred_x))
 plot_data <- data.frame(year = x, population = data$population)
 plot_f <- function(z) {
-  x_stj[1] * exp(x_stj[2] * z)
+  x_stj[1]/(1+  exp(-(x_stj[2] + x_stj[3] * z)))
 }
-
 
 ggplot(plot_data, aes(x,population)) +
   geom_point(color = "red") +
@@ -141,26 +228,109 @@ ggplot(plot_data, aes(x,population)) +
 
 ```
 
-Ift starting values anvendes metoden beskrevet i "Appendix-nonlinear-regression" afsnit 2. hvor funktionen vi vil beskrive $y$ med, altså $y = \beta_0 \exp^{\beta_1 x}$ omskrives sådan at parametrene danner en lineær funktion
-
-\begin{align*}
-  y &= \beta_0 \exp^{\beta_1 x} \\
-  \frac{y}{\beta_0} &= \exp{\beta_1 x} \\
-  \log{\frac{y}{\beta_0}} &= \beta_1 x \\
-  \log{y} &= log{\beta_0} + \beta_1 x
-\end{align*}
-
-hvor lm anvendes på denne funktion, vi anvender exp på den parameteren til det konstante led.
-
-```{r}
-
-
-
-
-```
-
-
-
 # Exercise 3: Be creative!
 
 If you have anything, put it here.
+
+
+
+
+
+<!-- ```{r} -->
+<!-- library(car) -->
+<!-- data <- carData::USPop -->
+<!-- plot(data) -->
+<!-- set.seed(1) -->
+<!-- n <- length(data$population) -->
+<!-- x <- 0:21 -->
+<!-- # x <- data$year -->
+
+<!-- f <- function(b) { -->
+<!--   b[1] * exp(b[2] * x) -->
+<!-- } -->
+<!-- y <- data$population -->
+
+<!-- dr1 <- function(b) { -->
+<!--   exp(b[2] * x) -->
+<!-- } -->
+<!-- dr2 <- function(b) { -->
+<!--   b[1] * exp(b[2] * x) * x -->
+<!-- } -->
+
+<!-- r <- function(b) { -->
+<!--   f(b) - y -->
+<!-- } -->
+
+<!-- j <- function(b) { -->
+<!--   j1 <- dr1(b) -->
+<!--   j2 <- dr2(b) -->
+<!--   as.matrix(data.frame(j1 = j1, j2 = j2)) -->
+<!-- } -->
+
+<!-- d_f <- function(b, j) { -->
+<!--   t(j) %*% r(b) -->
+<!-- } -->
+
+<!-- gauss_newton <- function(x0) { -->
+<!--   xk <- x0 -->
+<!--   jk <- j(xk) -->
+<!--   k <- 0 -->
+<!--   while (norm(d_f(xk, jk), "2") > 1e-03) { -->
+<!--     k <- k +1 -->
+<!--     rk <- r(xk) -->
+<!--     jk <- j(xk) -->
+<!--     dd_f_xk <- t(jk) %*% jk -->
+<!--     pk <- solve(dd_f_xk, (-t(jk) %*% rk)) -->
+<!--     xk <- xk + pk -->
+<!--   } -->
+<!--   cat("x* = ", xk, "\n", "antal iterationer = ", k) -->
+<!-- } -->
+<!-- gauss_newton(c(6,0.2)) -->
+
+<!-- nls(y ~ b1 * exp(b2 * x),start = list(b1 = 6,b2= 0.2)) -->
+
+<!-- x_stj <- c(15.0702772068714, 0.141844710338322) -->
+<!-- pred <- f(x_stj) -->
+
+<!-- plot_data <- data.frame(year = x, population = data$population) -->
+<!-- plot_f <- function(z) { -->
+<!--   x_stj[1] * exp(x_stj[2] * z) -->
+<!-- } -->
+
+<!-- ggplot(plot_data, aes(x,population)) + -->
+<!--   geom_point(color = "red") + -->
+<!--   geom_point(aes(x, pred), color = "blue") + -->
+<!--   stat_function(fun = plot_f) -->
+
+<!-- ``` -->
+
+<!-- Ift starting values anvendes metoden beskrevet i "Appendix-nonlinear-regression" afsnit 2. hvor funktionen vi vil beskrive $y$ med, altså $y = \beta_0 \exp^{\beta_1 x}$ omskrives sådan at parametrene danner en lineær funktion -->
+
+<!-- \begin{align*} -->
+<!--   y &= \beta_0 \exp^{\beta_1 x} \\ -->
+<!--   \frac{y}{\beta_0} &= \exp{\beta_1 x} \\ -->
+<!--   \log{\frac{y}{\beta_0}} &= \beta_1 x \\ -->
+<!--   \log{y} &= log{\beta_0} + \beta_1 x -->
+<!-- \end{align*} -->
+
+<!-- hvor lm anvendes på denne funktion, vi anvender exp på den parameteren til det konstante led. -->
+
+<!-- ```{r} -->
+
+<!-- start_lm <- lm(log(y) ~ x) -->
+<!-- start_vaerdi <- c(exp(coef(start_lm)[1]), coef(start_lm)[2]) -->
+<!-- names(start_vaerdi) <- c("b1", "b2") -->
+<!-- start_vaerdi -->
+
+<!-- ``` -->
+
+
+
+
+
+
+
+
+
+
+
