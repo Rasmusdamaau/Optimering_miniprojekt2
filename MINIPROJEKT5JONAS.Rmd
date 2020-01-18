@@ -1,0 +1,223 @@
+---
+title: "MINIPROJEKT5JONAS"
+author: "Spørg dig selv"
+date: "18 jan 2020"
+output: pdf_document
+---
+
+---
+title: "Disposition 5"
+author: "Jonas"
+date: "15/1/2020"
+output: pdf_document
+---
+\section{Optimering med bibetingelser}
+
+\subsection{Opgave 1}
+A boatyard produces three types of boats: cabin cruicers; racing sailboats and cruising sailboats. It takes 2
+weeks to produce a cabin cruicer; 1 week to produce a racing sailboats and 3 weeks to produce a cruising
+sailboat. The boatyard is closed during the last week of December. The profit on each kind of boat is 5000
+USD, 4000 USD and 6000 USD. Because of space considerations, the boatyard can finish at most 25 boats in
+one year (51 weeks).
+
+1. Find the number of boats of each kind that will maximize the annual profit.
+\subsubsection{Svar}
+Vi vil gerne maksimerer profitten. Hvis vi lader $x_1$ betegne antal "cabin cruicers", $x_2$ betegne antal "racing sailbots" og $x_3$ vÃ¦re antal 'cruising sailboats, sÃ¥ er den samlede profit altsÃ¥ givet ved 
+\begin{align*}
+P(x)=x_1*5000+x_2*4000+x_3*6000
+\end{align*}
+Derudover har vi, at 1$x_1$ tager 2 uger at producere, 1$x_2$ tager 1 uge og 1$x_3$ tager 3 uger. PÃ¥ grund af pladsmanglen har vi ogsÃ¥ at $x_1+x_2+x_3\leq 25$, samt $x_1\leq25,x_2\leq51,x_3\leq 17$.
+Vi introducerer nogle 'slack' variable sÃ¥ vi kan rette vores bibetingelser til uligheder. SÃ¥ opgaven gÃ¥r nu ud pÃ¥ at maksimere funktionen 
+\begin{align*}
+P(x)=x_1*5000+x_2*4000+x_3*6000
+\end{align*}
+I forhold til at 
+\begin{align*}
+x_1+s_1^2 &= 25\\
+x_2+s_2^2 &= 51\\
+x_3+s_3^2 &= 17\\
+x_1+x_2+x_3+s_4^2 &= 25
+\end{align*}
+Vi opstiller nu lagranagefunktionen
+\begin{align*}
+\mathcal{L}(x,s,\lambda)&=x_1*5000+x_2*4000+x_3*6000-\lambda_1(x_1+s_1^2-25)-\lambda_2(x_2+s_2^2-51)\\&-\lambda_3(x_3+s_3^2-17)-\lambda_4(x_1+x_2+x_3+s_4^2-25)
+\end{align*}
+Vi regner nu de partielt afledte ud og sÃ¦tter dem lig 0
+\begin{align*}
+\partial/\partial x_1 \mathcal{L}(x,s,\lambda) &= 5000-\lambda_1-\lambda_4 = 0\\
+\partial/\partial x_2 \mathcal{L}(x,s,\lambda) &= 4000-\lambda_2-\lambda_4 = 0\\
+\partial/\partial x_3 \mathcal{L}(x,s,\lambda) &= 6000-\lambda_3-\lambda_4 = 0\\
+\partial/\partial s_1 \mathcal{L}(x,s,\lambda) &= -2\lambda_1s_1 = 0\\
+\partial/\partial s_2 \mathcal{L}(x,s,\lambda) &= -2\lambda_2s_2 = 0\\
+\partial/\partial s_3 \mathcal{L}(x,s,\lambda) &= -2\lambda_3s_3 = 0\\
+\partial/\partial s_4 \mathcal{L}(x,s,\lambda) &= -2\lambda_4s_4 = 0\\
+\partial/\partial \lambda_1 \mathcal{L}(x,s,\lambda) &= x_1+s_1=25\\
+\partial/\partial \lambda_2 \mathcal{L}(x,s,\lambda) &= x_2+s_2 = 51\\
+\partial/\partial \lambda_3 \mathcal{L}(x,s,\lambda) &= x_3+s_3 = 17\\
+\partial/\partial \lambda_4 \mathcal{L}(x,s,\lambda) &= x_1+x_2+x_3+s_4=25\\
+\end{align*}
+
+
+
+
+
+
+\subsection{Opgave 2}
+Hvordan skal forholdet vÃ¦re mellem grundflade diameter (d) og hÃ¸jde (h) af en cylinderformet konservesdÃ¥se,
+der rummer 1 liter, for at der medgÃ¥r mindst muligt blik til fremstilling af dÃ¥sen?
+LÃ¸s opgaven ved brug af Lagrange multiplikatorteknikken; suppler evt med at lÃ¸se opgaven pÃ¥ en anden
+mÃ¥de efter eget valg.
+
+\subsubsection{Svar}
+
+Ved lagrange vil vi gerne minimere overfladearealet af en dÃ¥se, som er givet ved
+\begin{align*}
+A=2* \pi * r *(h+r)
+\end{align*}
+I forhold til at rumfanget er lig 1. AltsÃ¥ at 
+\begin{align*}
+V=\pi * r^2 * h = 1
+\end{align*}
+Vi opstiller derfor lagrangefunktionen
+\begin{align*}
+\mathcal{L}(r,h,\lambda)=2 * \pi * r(h+r)-\lambda(\pi * r^2 * h - 1)
+\end{align*}
+For at lÃ¸se opgaven differentiere vi i forhold til alle variable og sÃ¦tter dem lig 0;
+\begin{align*}
+&\frac{\partial}{\partial r}\mathcal{L}(r,h,\lambda) = 2\pi h+4\pi r-2\lambda\pi r h = 0\\
+&\frac{\partial}{\partial h}\mathcal{L}(r,h,\lambda) = 2\pi r-\lambda\pi r^2 = 0\\
+&\frac{\partial}{\partial \lambda}\mathcal{L}(r,h,\lambda) = -\pi r^2 h +1 = 0\\
+\end{align*}
+Vi vil nu lÃ¸se dette ligningsystem for at finde $r,\pi$ og $h$. Vi bruger den nederste ligning til at isolere $h$. Dette giver at $h = \frac{1}{\pi r^2}$ Dette sÃ¦tter vi ind i ligning 1 hvilket giver at 
+\begin{align*}
+2\pi\frac{1}{\pi r^2} + 4\pi r- 2\lambda\pi r \frac{1}{\pi r^2} &= 0\\
+\frac{2}{r^2}+4\pi r-2\lambda\frac{1}{r}&=0\\
+\frac{2}{r^2}+4\pi r &= 2\lambda\frac{1}{r}\\
+\frac{2}{r}+4\pi r^2 &= 2\lambda\\
+\frac{1}{r}+2\pi r^2 &= \lambda
+\end{align*}
+Dette kan vi nu smide ind i ligning 2 for at finde $r$, hvilket giver 
+\begin{align*}
+2\pi r-(\frac{1}{r}+2\pi r^2)\pi r^2 &= 0\\
+2\pi r &= (\frac{1}{r}+2\pi r^2)\pi r^2\\
+2\pi r &= \pi r + 2\pi^2r^4\\
+2 &= 1 + 2\pi r^3\\
+\frac{1}{2\pi}&= r^3\\
+(\frac{1}{2\pi})^{1/3}&= r\\
+\end{align*}
+Til sidst kan vi smide dette tilbage ind i ligningen for $h$ sÃ¥dan at vi fÃ¥r hÃ¸jden:
+\begin{align*}
+h &= \frac{1}{\pi (\frac{1}{2\pi})^{2/3}}\\
+&=\frac{1}{\frac{\pi}{(2\pi)^{2/3}}}\\
+&=\frac{(2\pi)^{2/3}}{\pi}\\
+&=\frac{2^{2/3}}{\pi^{1/3}}
+\end{align*}
+Hvor at vi fÃ¥r at $d=h$ hvis vi blot ganger $r$ med 2. En anden mÃ¥de at lÃ¸se dette problem pÃ¥ er ved at udnytte, at vi for det fÃ¸rste har at overfladearealet er givet ved 
+\begin{align*}
+A = 2* \pi * r *(h+r)
+\end{align*}
+Og siden at
+\begin{align*}
+V=\pi * r^2 * h = 1\Rightarrow h =\frac{1}{\pi r^2}
+\end{align*}
+Kan vi indsÃ¦tte dette i formlen for arealet og opfatte dette som en funktion af $r$:
+\begin{align*}
+A(r)=2\pi r(\frac{1}{\pi r^2}+r) = \frac{2}{r}+2\pi r^2
+\end{align*}
+Denne funktion kan vi optimere pÃ¥ den sÃ¦dvanlige mÃ¥de, ved at differentiere i forhold til $r$ og derefter sÃ¦tte den lig 0:
+\begin{align*}
+A'(r)=-\frac{2}{r^2}+4\pi r &= 0\\
+4\pi r &= \frac{2}{r^2}\\
+r^3 &= \frac{1}{2\pi}\\
+r &= (\frac{1}{2\pi})^{1/3}
+\end{align*}
+Dette kan vi sÃ¥ sÃ¦tte ind i udtrykket for $h$ igen, og vi fÃ¥r det samme facit.
+
+
+\subsection{Opgave 3}
+Betragt fÃ¸lgende situation: Vi har n uafhÃ¦ngige stokastiske variable $y_1,\ldots,y_n$ hvor $y_i\sim N(\mu,\sigma^2v_i^2)$, hvor alle $v_i$'er er kendt, og $\sigma^2$ er ukendt. 
+
+1. Vi Ã¸nsker at estimere $\mu$. Lad $\overline{y}=\frac{1}{n}\sum_{i}y_i$. Hvad er $E[\overline{y}]$ og $Var[\overline{y}]$? Kan man mon finde et bedre estimat
+for $\mu$ end et simpelt gennemsnit?
+
+\subsubsection{Svar}
+Vi anvender lineÃ¦riteten for at finde $E[\overline{y}]$:
+\begin{align*}
+E[\overline{y}]=n\frac{1}{n}E[y_i] = \mu
+\end{align*}
+For at finde variansen indsÃ¦tter vi blot:
+\begin{align*}
+Var[\overline{y}] = Var[\frac{1}{n}\sum_{i}y_i]=\frac{1}{n^2}Var[\sum_{i}y_i]=\frac{1}{n^2}Var[y_1+\ldots+y_n]&=\frac{1}{n^2}(Var[y_1]+\ldots+Var[y_n])\\
+&=\frac{\sigma^2}{n^2}\sum_iv_i^2
+\end{align*}
+Man kan sikkert godt finde et bedre estimat, hvis man bruger andet end nulmodellen, men det er svÃ¦rt ud fra de data der er givet.
+
+
+2. Lad $\tilde{y}=\sum_i p_iy_i$ hvor $p=(p_1,\ldots,p_n)$ er en vektor af kendte tal (som vi skal finde ud af at vÃ¦lge).
+Hvilken vÃ¦rdi af $p$ giver at $\tilde{y}$ har mindst mulig varians? Hvilke begrÃ¦nsninger lÃ¦gges der pÃ¥ $p_1,\ldots,p_n$ hvis vi Ã¸nsker at $E[\tilde{y}]=\mu$?
+
+\subsection{Svar}
+For at finde ud af hvilke vÃ¦rdier $p$ skal have for at minimere variansen kan vi starte med at udregne variansen
+\begin{align*}
+Var[\tilde{y}]=Var[\sum_i p_iy_i]=Var[p_1y_1+\ldots+p_ny_n]&=p_1^2Var[y_1]+\ldots+p_n^2Var[y_n]\\
+&=\sigma^2(p_1^2v_1^2+\ldots+p_n^2v_n^2)\\
+&=\sigma^2\sum_ip_i^2v_i^2
+\end{align*}
+Hvor vi kan se, at vi opnÃ¥r mindst varians, hvis summen giver 0. Hvis vi vil have at $E[\tilde{y}]=\mu$, kan vi beregne den forventede vÃ¦rdi
+\begin{align*}
+E[\tilde{y}]=E[\sum_i p_iy_i]=p_1E[y_1]+\ldots+p_nE[y_n] = p_1\mu+\ldots+p_n\mu = \mu\sum_ip_i
+\end{align*}
+Hvilket viser at denne sum skal give 1 for at dette er tilfÃ¦ldet. 
+
+3. I statistik Ã¸nsker man ofte at fÃ¥ et parameterestimat, der er unbiased of har mindst mulig varians. Vi
+Ã¸nsker altsÃ¥ at vÃ¦lge p sÃ¥ $\tilde{y}$ har middelvÃ¦rdi $\mu$ og mindst mulig varians. LÃ¸s dette problem ved hjÃ¦lp
+af Lagrange metoden. LÃ¸s evt. problemet pÃ¥ en anden mÃ¥de ogsÃ¥.
+
+\subsection{Svar}
+For at gÃ¸re dette vil vi altsÃ¥ minimere variansen, som vi har fundet til at vÃ¦re 
+\begin{align*}
+Var[\tilde{y}]=\sigma^2\sum_ip_i^2v_i^2
+\end{align*}
+I forhold til at middelvÃ¦rdien skal vÃ¦re $\mu$, som vi fandt ud af betÃ¸d at 
+\begin{align*}
+\sum_ip_i = 1.
+\end{align*}
+Vi opstiller derfor lagrangefunktionen:
+\begin{align*}
+\mathcal{L}(p,\lambda) = \sigma^2\sum_ip_i^2v_i^2-\lambda(\sum_i p_i-1)
+\end{align*}
+Vi differentierer nu i forhold til $p_i$ og sÃ¦tter det lig 0 for at se hvordan det kommer til at se ud: 
+\begin{align*}
+\partial/\partial p_i\mathcal{L}(p,\lambda) = 2\sigma^2p_iv_i^2 = 0
+\end{align*}
+Og i forhold til $\lambda$
+\begin{align*}
+\partial/\partial \lambda\mathcal{L}(p,\lambda) = \sum_ip_i = 1
+\end{align*}
+Dette kan sÃ¦ttes op pÃ¥ matrix-vektor form, og man kan derefter lÃ¸se et ligningssystem. Dette kan jeg ikke lige finde ud af i $R$. 
+\subsection{Opgave 4}
+Betragt lineÃ¦r regressionsmodel $y_i=\beta_0+\beta_1x_i+\varepsilon_i$. Det krÃ¦ves her at $\beta_1>0$
+
+1. Fit modellen under denne betingelse til cars data. 
+\subsubsection{Svar}
+```{r}
+Speed <- cars$speed
+dist <- cars$dist
+model1 <- lm(cars$dist ~ cars$speed)
+summary(model1)
+```
+Her fÃ¥r vi sÃ¥, at $\hat{\beta}_0= -17.5791$ og $\hat\beta_1 = 3.9324$ selvom der ikke bliver lagt nogen bibetingelse pÃ¥ $beta_1$. Derfor er opgaven udfÃ¸rt. 
+
+2. Find spredningen pÃ¥ $\hat{\beta}_1$ og et tilhÃ¸rende 95% konfidensinterval. 
+
+\subsubsection{Svar}
+
+Vi har allerede spredningen. Den stÃ¥r i 'summary' til at vÃ¦re $0.4155$. For at finde et 95% konfidensinterval bruger vi kommandoen confint:
+```{r}
+confint(model1, level = 0.95)
+```
+AltsÃ¥ er en 95% konfidensinterval $[3.096964,4.767853]$
+
+3. Sammenlign disse stÃ¸rrelser med de tilsvarende stÃ¸rrelser man fÃ¥r hvis man ikke krÃ¦ver $\beta_1>0$
+\subsubsection{Svar}
+Der er ingen forskel.
